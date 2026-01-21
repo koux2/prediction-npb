@@ -272,6 +272,27 @@ main.active {
     background: #0056b3;
 }
 
+/* Result Header */
+.result-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.secondary-btn {
+    padding: 8px 16px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.secondary-btn:hover {
+    background: #5a6268;
+}
+
 /* Result Grid Styles */
 .result-grid {
     overflow-x: auto;

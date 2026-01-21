@@ -26,6 +26,8 @@ const PACIFIC_TEAMS = [
 const DEFAULT_CENTRAL_ORDER = ['阪神', 'DeNA', '巨人', '中日', '広島', 'ヤクルト'];
 const DEFAULT_PACIFIC_ORDER = ['ソフトバンク', '日本ハム', 'オリックス', '楽天', '西武', 'ロッテ'];
 
+let currentData = [];
+
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
     initTabs();
@@ -37,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('prediction-form').addEventListener('submit', handleSubmit);
+    document.getElementById('download-csv-btn').addEventListener('click', downloadCSV);
 });
 
 function initTabs() {
@@ -190,6 +193,7 @@ async function fetchAndRenderResults() {
     try {
         const response = await fetch(API_URL);
         const data = await response.json();
+        currentData = data; // CSV出力用に保持
 
         renderGrid(data);
     } catch (error) {
@@ -287,4 +291,41 @@ function getShortName(name) {
         'ロッテ': 'ロ'
     };
     return map[name] || name;
+}
+
+function downloadCSV() {
+    if (!currentData || currentData.length === 0) {
+        alert('データがありません。先に集計結果を表示してください。');
+        return;
+    }
+
+    // CSV生成 (名前, セ1~6, パ1~6)
+    // チーム名は頭文字だけにする
+    const lines = currentData.map(row => {
+        const cols = [row.Name];
+        // Central
+        for (let i = 1; i <= 6; i++) {
+            const teamName = row[`Central${i}`];
+            cols.push(teamName.charAt(0));
+        }
+        // Pacific
+        for (let i = 1; i <= 6; i++) {
+            const teamName = row[`Pacific${i}`];
+            cols.push(teamName.charAt(0));
+        }
+        return cols.join(',');
+    });
+
+    const csvContent = lines.join('\n');
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // BOM付与 (Excel文字化け対策)
+    const blob = new Blob([bom, csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'predictions.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }

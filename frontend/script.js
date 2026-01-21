@@ -30,7 +30,7 @@ let currentData = [];
 
 // 初期化
 document.addEventListener('DOMContentLoaded', () => {
-    initTabs();
+    initRouting();
     generateInputs();
 
     // API URLが設定されていない場合のアラート
@@ -42,26 +42,48 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('download-csv-btn').addEventListener('click', downloadCSV);
 });
 
-function initTabs() {
+function initRouting() {
     const tabInput = document.getElementById('tab-input');
     const tabResult = document.getElementById('tab-result');
     const inputView = document.getElementById('input-view');
     const resultView = document.getElementById('result-view');
 
+    // タブ切り替え処理（UI更新のみ）
+    const showTab = (tabId) => {
+        if (tabId === 'input') {
+            tabInput.classList.add('active');
+            tabResult.classList.remove('active');
+            inputView.classList.add('active');
+            resultView.classList.remove('active');
+        } else if (tabId === 'result') {
+            tabResult.classList.add('active');
+            tabInput.classList.remove('active');
+            resultView.classList.add('active');
+            inputView.classList.remove('active');
+            fetchAndRenderResults();
+        }
+    };
+
+    // 現在のハッシュに基づいてタブを表示
+    const handleHashChange = () => {
+        const hash = window.location.hash.replace('#', '') || 'input';
+        showTab(hash);
+    };
+
+    // クリック時はハッシュを更新（履歴に追加）
     tabInput.addEventListener('click', () => {
-        tabInput.classList.add('active');
-        tabResult.classList.remove('active');
-        inputView.classList.add('active');
-        resultView.classList.remove('active');
+        window.location.hash = 'input';
     });
 
     tabResult.addEventListener('click', () => {
-        tabResult.classList.add('active');
-        tabInput.classList.remove('active');
-        resultView.classList.add('active');
-        inputView.classList.remove('active');
-        fetchAndRenderResults();
+        window.location.hash = 'result';
     });
+
+    // 戻る/進むボタン対応
+    window.addEventListener('hashchange', handleHashChange);
+
+    // 初回ロード時の実行
+    handleHashChange();
 }
 
 function generateInputs() {
@@ -172,7 +194,9 @@ async function handleSubmit(e) {
         document.getElementById('prediction-form').reset();
         // Reset order
         generateInputs();
-        document.getElementById('tab-result').click(); // 結果タブへ移動
+        // Reset order
+        generateInputs();
+        window.location.hash = 'result'; // 結果タブへ移動
 
     } catch (error) {
         console.error(error);

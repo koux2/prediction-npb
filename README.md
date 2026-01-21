@@ -46,6 +46,30 @@ const API_URL = 'https://script.google.com/macros/s/xxxxxxxxxxxxxxxxx/exec';
 `frontend/index.html` をブラウザで開くだけで利用可能です。
 GitHub Pagesや、その他任意のWebサーバーに配置しても動作します。
 
+## デプロイ (GitHub Pages)
+
+GitHub Pagesを利用して、このツールをWeb上に公開することができます。
+
+### 1. 公開設定
+1. リポジトリの **Settings** > **Pages** を開きます。
+2. **Build and deployment** > **Source** を `Deploy from a branch` に設定します。
+3. **Branch** を `main` 、フォルダを `/ (root)` に設定して **Save** をクリックします。
+
+### 2. API URLの設定
+リポジトリ内のコードはセキュリティのため、API URLがプレースホルダーになっています。
+動かすためには、以下の手順でURLを設定してください。
+
+1. GitHub上で `frontend/script.js` を開きます。
+2. 鉛筆アイコン（Edit）をクリックし、3行目の `API_URL` をご自身のGASウェブアプリURLに書き換えます。
+3. ページ下部の **Commit changes** をクリックして保存します。
+
+### 3. アプリへのアクセス
+数分後、以下のURL構成でアクセスできるようになります。
+
+`https://<ユーザー名>.github.io/<リポジトリ名>/frontend/`
+
+例: `https://koux2.github.io/prediction-npb/frontend/`
+
 ## 開発者向け情報
 - **使用技術**: HTML5, CSS3, Vanilla JavaScript, Google Apps Script
 - **デザイン**: チームカラーをベースにした視認性の高いテーブルデザイン

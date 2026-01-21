@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPB順位予想ツール</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>NPB 順位予想</h1>
+            <nav>
+                <button id="tab-input" class="active">予想入力</button>
+                <button id="tab-result">集計結果</button>
+            </nav>
+        </header>
+
+        <main id="input-view" class="active">
+            <form id="prediction-form">
+                <div class="form-group">
+                    <label for="user-name">あなたのお名前</label>
+                    <input type="text" id="user-name" required placeholder="例: 山田太郎">
+                </div>
+
+                <p class="instruction-text">※チームをドラッグ＆ドロップして順位を入れ替えられます</p>
+
+                <div class="leagues-container">
+                    <div class="league-section central">
+                        <h2>セ・リーグ 予想</h2>
+                        <div class="ranking-inputs" id="central-inputs">
+                            <!-- JSで生成 -->
+                        </div>
+                    </div>
+
+                    <div class="league-section pacific">
+                        <h2>パ・リーグ 予想</h2>
+                        <div class="ranking-inputs" id="pacific-inputs">
+                            <!-- JSで生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="submit-btn">送信する</button>
+                </div>
+            </form>
+        </main>
+
+        <main id="result-view">
+            <div id="loading" class="hidden">読み込み中...</div>
+            <div id="result-grid" class="result-grid">
+                <!-- JSで生成 -->
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

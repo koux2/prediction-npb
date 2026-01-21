@@ -35,8 +35,8 @@ Google SheetsとGoogle Apps Script (GAS) を利用したサーバーレス構成
 詳細は [backend/README.md](./backend/README.md) を参照してください。
 
 ### 2. フロントエンドの設定
-1. `frontend/script.js` を開きます。
-2. 3行目の `API_URL` を、バックエンドの準備で取得した「ウェブアプリ URL」に書き換えてください。
+1. `frontend/config.sample.js` をコピーして `frontend/config.js` を作成します。
+2. `frontend/config.js` を開き、`API_URL` をバックエンドの「ウェブアプリ URL」に書き換えてください。
 
 ```javascript
 const API_URL = 'https://script.google.com/macros/s/xxxxxxxxxxxxxxxxx/exec';
@@ -44,7 +44,6 @@ const API_URL = 'https://script.google.com/macros/s/xxxxxxxxxxxxxxxxx/exec';
 
 ### 3. 利用開始
 `frontend/index.html` をブラウザで開くだけで利用可能です。
-GitHub Pagesや、その他任意のWebサーバーに配置しても動作します。
 
 ## デプロイ (GitHub Pages)
 
@@ -56,12 +55,16 @@ GitHub Pagesを利用して、このツールをWeb上に公開することが�
 3. **Branch** を `main` 、フォルダを `/ (root)` に設定して **Save** をクリックします。
 
 ### 2. API URLの設定
-リポジトリ内のコードはセキュリティのため、API URLがプレースホルダーになっています。
-動かすためには、以下の手順でURLを設定してください。
+公開環境でも `config.js` が必要です。
 
-1. GitHub上で `frontend/script.js` を開きます。
-2. 鉛筆アイコン（Edit）をクリックし、3行目の `API_URL` をご自身のGASウェブアプリURLに書き換えます。
-3. ページ下部の **Commit changes** をクリックして保存します。
+1. GitHub上で `frontend` フォルダに移動し、**Add file** > **Create new file** を選択します。
+2. ファイル名を `config.js` とします。
+3. 以下の内容を記入し（URLは書き換えてください）、**Commit changes** します。
+   ```javascript
+   const API_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_URL/exec';
+   ```
+   ※ `config.js` は `.gitignore` に指定されていますが、GitHub上で手動作成することで強制的に登録・公開可能です。
+   （または、ローカルで `.gitignore` から一時的に外してPushする運用も可能です）
 
 ### 3. アプリへのアクセス
 数分後、以下のURL構成でアクセスできるようになります。

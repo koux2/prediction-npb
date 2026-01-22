@@ -73,6 +73,7 @@
     function generateInputs() {
         const createList = (teams, defaultOrder, containerId) => {
             const container = document.getElementById(containerId);
+            const league = container.dataset.league; // 追加
             container.innerHTML = '';
 
             const orderedTeams = defaultOrder.map(name => teams.find(t => t.name === name)).filter(Boolean);
@@ -86,6 +87,7 @@
                 card.textContent = team.name;
                 card.draggable = true;
                 card.dataset.value = team.name;
+                card.dataset.league = league; // 追加
 
                 card.addEventListener('dragstart', () => {
                     card.classList.add('dragging');
@@ -100,12 +102,16 @@
 
             container.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                const afterElement = getDragAfterElement(container, e.clientY);
                 const draggable = document.querySelector('.dragging');
-                if (afterElement == null) {
-                    container.appendChild(draggable);
-                } else {
-                    container.insertBefore(draggable, afterElement);
+
+                // ドラッグ中の要素とコンテナのリーグが一致する場合のみ処理
+                if (draggable && draggable.dataset.league === league) {
+                    const afterElement = getDragAfterElement(container, e.clientY);
+                    if (afterElement == null) {
+                        container.appendChild(draggable);
+                    } else {
+                        container.insertBefore(draggable, afterElement);
+                    }
                 }
             });
         };

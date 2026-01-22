@@ -1,8 +1,21 @@
 function doGet(e) {
+  const template = HtmlService.createTemplateFromFile('index');
+  template.initialPage = e.parameter.page || 'input';
+  
+  return template.evaluate()
+    .setTitle('NPB順位予想ツール')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+function getData() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('predictions');
   if (!sheet) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Sheet not found' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return JSON.stringify({ status: 'error', message: 'Sheet not found' });
   }
 
   const data = sheet.getDataRange().getValues();
@@ -17,41 +30,27 @@ function doGet(e) {
     return obj;
   });
 
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
+  return JSON.stringify(result);
 }
 
-function doPost(e) {
+function saveData(dataObj) {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('predictions');
     if (!sheet) {
-      return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Sheet not found' }))
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // POSTデータはJSON形式で送られてくると仮定、もしくはパラメータとして受け取る
-    // 今回はapplication/jsonでの送信を想定
-    let params;
-    if (e.postData && e.postData.contents) {
-      params = JSON.parse(e.postData.contents);
-    } else {
-      params = e.parameter;
+      return JSON.stringify({ status: 'error', message: 'Sheet not found' });
     }
 
     const timestamp = new Date();
-    const name = params.name;
-    const central = params.central || []; // Array of 6 teams
-    const pacific = params.pacific || []; // Array of 6 teams
+    const name = dataObj.name;
+    const central = dataObj.central || []; 
+    const pacific = dataObj.pacific || []; 
     
     // バリデーション
     if (!name || central.length !== 6 || pacific.length !== 6) {
-       return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Invalid data' }))
-        .setMimeType(ContentService.MimeType.JSON);
+       return JSON.stringify({ status: 'error', message: 'Invalid data' });
     }
     
-    // 同一ユーザー名の既存データがあれば更新、なければ新規追加
-    // ここではシンプルに追記のみとするが、要望があればUpdate処理を入れる
-    // 重複チェック
+    // 重複チェック (Update)
     const data = sheet.getDataRange().getValues();
     let rowIndex = -1;
     for (let i = 1; i < data.length; i++) {
@@ -76,12 +75,10 @@ function doPost(e) {
       sheet.appendRow(newRow);
     }
 
-    return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Data saved' }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return JSON.stringify({ status: 'success', message: 'Data saved' });
 
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return JSON.stringify({ status: 'error', message: error.toString() });
   }
 }
 

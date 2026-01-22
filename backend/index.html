@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NPB順位予想ツール</title>
     <link rel="icon" href="favicon.jpg">
-    <link rel="stylesheet" href="style.css">
+    <?!= include('css'); ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -19,12 +19,12 @@
         <header>
             <h1>NPB 順位予想</h1>
             <nav>
-                <button id="tab-input" class="active">予想入力</button>
-                <button id="tab-result">集計結果</button>
+                <button id="tab-input" class="<?= initialPage === 'result' ? '' : 'active' ?>">予想入力</button>
+                <button id="tab-result" class="<?= initialPage === 'result' ? 'active' : '' ?>">集計結果</button>
             </nav>
         </header>
 
-        <main id="input-view" class="active">
+        <main id="input-view" class="<?= initialPage === 'result' ? '' : 'active' ?>">
             <form id="prediction-form">
                 <div class="form-group">
                     <label for="user-name">あなたのお名前</label>
@@ -55,7 +55,7 @@
             </form>
         </main>
 
-        <main id="result-view">
+        <main id="result-view" class="<?= initialPage === 'result' ? 'active' : '' ?>">
             <div class="result-header">
                 <button id="download-csv-btn" class="secondary-btn">CSV出力</button>
             </div>
@@ -66,8 +66,10 @@
         </main>
     </div>
 
-    <script src="config.js"></script>
-    <script src="script.js"></script>
+    <script>
+        window.INITIAL_PAGE = '<?= initialPage ?>';
+    </script>
+    <?!= include('js'); ?>
 </body>
 
 </html>

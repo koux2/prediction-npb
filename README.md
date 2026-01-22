@@ -1,82 +1,49 @@
 # NPB 順位予想集計ツール
 
 日本プロ野球（NPB）のセ・パ両リーグの順位予想を入力し、集計・一覧表示するためのWebツールです。
-Google SheetsとGoogle Apps Script (GAS) を利用したサーバーレス構成で動作します。
+Google Apps Script (GAS) 上でHTML/JS/CSSをホストし、Google Sheetsと連携して動作します。
 
-## 機能
+## 特徴
 
-- **順位予想入力**:
-    - ドラッグ＆ドロップで直感的にチーム順位を入れ替え可能。
-    - 名前を入力して送信。
-- **集計結果表示**:
-    - 登録された全員の予想を一覧表示。
-    - チームカラー背景＋白文字で見やすく表示。
-- **データ保存**:
-    - Google Sheetsにデータを自動蓄積。
+- **GAS完結構成**: 外部サーバーやGitHub Pagesは不要。GASエディタにコードを貼り付けるだけで即座に公開可能。
+- **権限問題の回避**: 同一ドメイン内で処理が完結するため、クロスドメイン制約（CORS）や権限エラーに悩まされることがありません。
+- **ドラッグ＆ドロップ機能**: チーム順位を直感的に入れ替え可能。
+- **チームカラー表示**: 各チームのカラーを反映した見やすい集計テーブル。
 
 ## ディレクトリ構成
 
 ```
 .
-├── backend/
-│   ├── code.gs       # Google Apps Script コード (APIエンドポイント)
-│   └── README.md     # バックエンド(GAS)のセットアップ手順書
-├── frontend/
-│   ├── index.html    # メイン画面 HTML
-│   ├── style.css     # スタイルシート
-│   └── script.js     # フロントエンドロジック (API連携, DnD処理)
+├── backend/          # Google Apps Script プロジェクト用ファイル
+│   ├── code.gs       # サーバーサイドロジック
+│   ├── index.html    # メインHTML構造
+│   ├── css.html      # スタイルシート（ブラッシュアップ版）
+│   ├── js.html       # フロントエンドロジック (DnD, 通信処理)
+│   └── README.md     # 詳細セットアップ手順
 └── README.md         # 本ファイル
 ```
 
 ## セットアップ手順
 
-### 1. バックエンド (GAS) の準備
-まず、Google SheetsとGASの準備が必要です。
 詳細は [backend/README.md](./backend/README.md) を参照してください。
 
-### 2. フロントエンドの設定
-1. `frontend/config.sample.js` をコピーして `frontend/config.js` を作成します。
-2. `frontend/config.js` を開き、`API_URL` をバックエンドの「ウェブアプリ URL」に書き換えてください。
+### クイックスタート
+1. **Googleスプレッドシート**を作成し、`拡張機能` > `Apps Script` を開きます。
+2. `backend/` フォルダ内の 4 つのファイルを、GASエディタ上に同じ名前で作成（コピー＆ペースト）します。
+3. エディタ上部の関数選択で `setupSheet` を選んで実行し、シートを初期化します。
+4. `デプロイ` > `新しいデプロイ` から「ウェブアプリ」として公開します（アクセスできるユーザーは「全員」）。
+5. 発行されたURLにアクセスすれば完了です！
 
-```javascript
-const API_URL = 'https://script.google.com/macros/s/xxxxxxxxxxxxxxxxx/exec';
-```
+## リリースノート
 
-### 3. 利用開始
-`frontend/index.html` をブラウザで開くだけで利用可能です。
+### v2.0 (2026-01-22)
+- **GASホスティング構成への完全移行**: GitHub Pagesを介さず、GAS上でフロントエンドを表示・動作させる仕組みに変更しました。これによりCORSエラーや権限問題を解消しました。
+- **直接アクセス機能**: URLパラメータ `?page=result` を追加することで、集計結果ページに直接アクセスできるようになりました。
+- **UI/UXのブラッシュアップ**: ドラッグ中のカードに視覚効果を追加し、操作感を向上させました。
+- **不要なファイルの削除**: 旧 `frontend/` ディレクトリを削除し、プロジェクト構成を整理しました。
 
-## デプロイ (GitHub Pages)
-
-GitHub Pagesを利用して、このツールをWeb上に公開することができます。
-
-### 1. 公開設定
-1. リポジトリの **Settings** > **Pages** を開きます。
-2. **Build and deployment** > **Source** を `Deploy from a branch` に設定します。
-3. **Branch** を `main` 、フォルダを `/ (root)` に設定して **Save** をクリックします。
-
-### 2. API URLの設定
-公開環境でも `config.js` が必要です。
-
-1. GitHub上で `frontend` フォルダに移動し、**Add file** > **Create new file** を選択します。
-2. ファイル名を `config.js` とします。
-3. 以下の内容を記入し（URLは書き換えてください）、**Commit changes** します。
-   ```javascript
-   const API_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_URL/exec';
-   ```
-   ※ `config.js` は `.gitignore` に指定されていますが、GitHub上で手動作成することで強制的に登録・公開可能です。
-   （または、ローカルで `.gitignore` から一時的に外してPushする運用も可能です）
-
-### 3. アプリへのアクセス
-数分後、以下のURL構成でアクセスできるようになります。
-
-`https://<ユーザー名>.github.io/<リポジトリ名>/frontend/`
-
-例: `https://koux2.github.io/prediction-npb/frontend/`
-
-## 開発者向け情報
-- **使用技術**: HTML5, CSS3, Vanilla JavaScript, Google Apps Script
-- **デザイン**: チームカラーをベースにした視認性の高いテーブルデザイン
-- **入力UI**: HTML5 Drag and Drop API を使用
+### v1.0
+- 初回リリース（ドラッグ＆ドロップによる順位予想機能の実装）。
 
 ## ライセンス
 MIT License

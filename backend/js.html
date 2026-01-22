@@ -1,0 +1,302 @@
+<script>
+    const CENTRAL_TEAMS = [
+        { id: 'giants', name: '巨人', short: '巨', className: 'team-giants' },
+        { id: 'tigers', name: '阪神', short: '神', className: 'team-tigers' },
+        { id: 'baystars', name: 'DeNA', short: 'D', className: 'team-baystars' },
+        { id: 'carp', name: '広島', short: '広', className: 'team-carp' },
+        { id: 'dragons', name: '中日', short: '中', className: 'team-dragons' },
+        { id: 'swallows', name: 'ヤクルト', short: 'ヤ', className: 'team-swallows' }
+    ];
+
+    const PACIFIC_TEAMS = [
+        { id: 'hawks', name: 'ソフトバンク', short: 'ソ', className: 'team-hawks' },
+        { id: 'lions', name: '西武', short: '西', className: 'team-lions' },
+        { id: 'eagles', name: '楽天', short: '楽', className: 'team-eagles' },
+        { id: 'buffaloes', name: 'オリックス', short: 'オ', className: 'team-buffaloes' },
+        { id: 'fighters', name: '日本ハム', short: '日', className: 'team-fighters' },
+        { id: 'marines', name: 'ロッテ', short: 'ロ', className: 'team-marines' }
+    ];
+
+    const DEFAULT_CENTRAL_ORDER = ['阪神', 'DeNA', '巨人', '中日', '広島', 'ヤクルト'];
+    const DEFAULT_PACIFIC_ORDER = ['ソフトバンク', '日本ハム', 'オリックス', '楽天', '西武', 'ロッテ'];
+
+    let currentData = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initRouting();
+        generateInputs();
+
+        document.getElementById('prediction-form').addEventListener('submit', handleSubmit);
+        document.getElementById('download-csv-btn').addEventListener('click', downloadCSV);
+    });
+
+    function initRouting() {
+        const tabInput = document.getElementById('tab-input');
+        const tabResult = document.getElementById('tab-result');
+        const inputView = document.getElementById('input-view');
+        const resultView = document.getElementById('result-view');
+
+        const showTab = (tabId) => {
+            if (tabId === 'input') {
+                tabInput.classList.add('active');
+                tabResult.classList.remove('active');
+                inputView.classList.add('active');
+                resultView.classList.remove('active');
+            } else if (tabId === 'result') {
+                tabResult.classList.add('active');
+                tabInput.classList.remove('active');
+                resultView.classList.add('active');
+                inputView.classList.remove('active');
+                fetchAndRenderResults();
+            }
+        };
+
+        const handleHashChange = () => {
+            const hash = window.location.hash.replace('#', '');
+            // URLパラメータ(?page=result)があるか、ハッシュがresultなら結果表示
+            const target = hash || (window.INITIAL_PAGE === 'result' ? 'result' : 'input');
+            showTab(target);
+        };
+
+        tabInput.addEventListener('click', () => {
+            window.location.hash = 'input';
+        });
+
+        tabResult.addEventListener('click', () => {
+            window.location.hash = 'result';
+        });
+
+        window.addEventListener('hashchange', handleHashChange);
+        handleHashChange();
+    }
+
+    function generateInputs() {
+        const createList = (teams, defaultOrder, containerId) => {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            const orderedTeams = defaultOrder.map(name => teams.find(t => t.name === name)).filter(Boolean);
+            teams.forEach(t => {
+                if (!orderedTeams.includes(t)) orderedTeams.push(t);
+            });
+
+            orderedTeams.forEach(team => {
+                const card = document.createElement('div');
+                card.className = `team-card ${team.className}`;
+                card.textContent = team.name;
+                card.draggable = true;
+                card.dataset.value = team.name;
+
+                card.addEventListener('dragstart', () => {
+                    card.classList.add('dragging');
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                });
+
+                container.appendChild(card);
+            });
+
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(container, e.clientY);
+                const draggable = document.querySelector('.dragging');
+                if (afterElement == null) {
+                    container.appendChild(draggable);
+                } else {
+                    container.insertBefore(draggable, afterElement);
+                }
+            });
+        };
+
+        createList(CENTRAL_TEAMS, DEFAULT_CENTRAL_ORDER, 'central-inputs');
+        createList(PACIFIC_TEAMS, DEFAULT_PACIFIC_ORDER, 'pacific-inputs');
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.team-card:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function handleSubmit(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '送信中...';
+
+        const data = {
+            name: document.getElementById('user-name').value,
+            central: [],
+            pacific: []
+        };
+
+        const centralCards = document.querySelectorAll('#central-inputs .team-card');
+        const pacificCards = document.querySelectorAll('#pacific-inputs .team-card');
+
+        centralCards.forEach(card => data.central.push(card.dataset.value));
+        pacificCards.forEach(card => data.pacific.push(card.dataset.value));
+
+        if (new Set(data.central).size !== 6 || new Set(data.pacific).size !== 6) {
+            alert('順位予想に重複があります。各チームを1回ずつ選択してください。');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '送信する';
+            return;
+        }
+
+        // Google Apps Scriptの関数を呼び出す
+        google.script.run
+            .withSuccessHandler((response) => {
+                const res = JSON.parse(response);
+                if (res.status === 'success') {
+                    alert('送信しました！');
+                    document.getElementById('prediction-form').reset();
+                    generateInputs();
+                    window.location.hash = 'result';
+                } else {
+                    alert('エラー: ' + res.message);
+                }
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送信する';
+            })
+            .withFailureHandler((error) => {
+                console.error(error);
+                alert('送信に失敗しました。');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '送信する';
+            })
+            .saveData(data);
+    }
+
+    function fetchAndRenderResults() {
+        const loading = document.getElementById('loading');
+        const grid = document.getElementById('result-grid');
+
+        loading.classList.remove('hidden');
+        grid.innerHTML = '';
+
+        google.script.run
+            .withSuccessHandler((response) => {
+                const data = JSON.parse(response);
+                currentData = data;
+                renderGrid(data);
+                loading.classList.add('hidden');
+            })
+            .withFailureHandler((error) => {
+                console.error(error);
+                grid.innerHTML = '<p>データの取得に失敗しました。</p>';
+                loading.classList.add('hidden');
+            })
+            .getData();
+    }
+
+    function renderGrid(data) {
+        const grid = document.getElementById('result-grid');
+        if (data.length === 0) {
+            grid.innerHTML = '<p>データがありません。</p>';
+            return;
+        }
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        const trHead = document.createElement('tr');
+        trHead.innerHTML = `
+        <th class="header-corner" rowspan="2">名前</th>
+        <th class="header-central" colspan="6">セ・リーグ</th>
+        <th class="header-pacific" colspan="6">パ・リーグ</th>
+    `;
+        const trSubHead = document.createElement('tr');
+        let subHeadHTML = '';
+        for (let i = 1; i <= 6; i++) subHeadHTML += `<th class="header-central">${i}</th>`;
+        for (let i = 1; i <= 6; i++) subHeadHTML += `<th class="header-pacific">${i}</th>`;
+        trSubHead.innerHTML = subHeadHTML;
+
+        thead.appendChild(trHead);
+        thead.appendChild(trSubHead);
+        table.appendChild(thead);
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            const tdName = document.createElement('td');
+            tdName.className = 'name-cell';
+            tdName.textContent = row.Name;
+            tr.appendChild(tdName);
+
+            for (let i = 1; i <= 6; i++) {
+                const teamName = row[`Central${i}`];
+                const td = document.createElement('td');
+                td.textContent = getShortName(teamName);
+                td.className = `team-cell ${getTeamClass(teamName)}`;
+                tr.appendChild(td);
+            }
+
+            for (let i = 1; i <= 6; i++) {
+                const teamName = row[`Pacific${i}`];
+                const td = document.createElement('td');
+                td.textContent = getShortName(teamName);
+                td.className = `team-cell ${getTeamClass(teamName)}`;
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        });
+
+        table.appendChild(tbody);
+        grid.appendChild(table);
+    }
+
+    function getTeamClass(name) {
+        const allTeams = [...CENTRAL_TEAMS, ...PACIFIC_TEAMS];
+        const team = allTeams.find(t => t.name === name);
+        return team ? team.className : '';
+    }
+
+    function getShortName(name) {
+        const allTeams = [...CENTRAL_TEAMS, ...PACIFIC_TEAMS];
+        const team = allTeams.find(t => t.name === name);
+        return team ? team.short : name;
+    }
+
+    function downloadCSV() {
+        if (!currentData || currentData.length === 0) {
+            alert('データがありません。先に集計結果を表示してください。');
+            return;
+        }
+
+        const lines = currentData.map(row => {
+            const cols = [row.Name];
+            for (let i = 1; i <= 6; i++) {
+                const teamName = row[`Central${i}`];
+                cols.push(teamName.charAt(0));
+            }
+            for (let i = 1; i <= 6; i++) {
+                const teamName = row[`Pacific${i}`];
+                cols.push(teamName.charAt(0));
+            }
+            return cols.join(',');
+        });
+
+        const csvContent = lines.join('\n');
+        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+        const blob = new Blob([bom, csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'predictions.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+</script>
